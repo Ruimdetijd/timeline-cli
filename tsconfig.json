@@ -1,0 +1,12 @@
+{
+  "compilerOptions": {
+    "declaration": true,
+    "module": "commonjs",
+    "noUnusedLocals": true,
+		"outDir": "build",
+    "removeComments": true,
+		"rootDir": "src",
+    "target": "es6"
+  },
+  "exclude": ["node_modules", "build"]
+}
