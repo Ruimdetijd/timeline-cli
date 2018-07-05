@@ -8,14 +8,16 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-const chalk_1 = require("chalk");
-const utils_1 = require("./utils");
-exports.default = (eventId, tagIds) => __awaiter(this, void 0, void 0, function* () {
-    const rows = yield utils_1.execSql(`INSERT INTO event__tag
-									(event_id, tag_id)
-								VALUES
-									${tagIds.map(id => `(${eventId}, ${id})`)}
-								ON CONFLICT DO NOTHING`);
-    if (rows.length)
-        console.log(chalk_1.default `{green ${rows.length.toString()} tag(s) inserted/updated in db!}`);
+const fetch_dates_1 = require("./fetch-dates");
+const insert_event_1 = require("./db/insert-event");
+const handle_locations_1 = require("./handle-locations");
+const readline_1 = require("./readline");
+exports.default = (eventType, entity) => __awaiter(this, void 0, void 0, function* () {
+    if (eventType == null || entity == null)
+        return null;
+    const dates = yield fetch_dates_1.default(eventType, entity.id);
+    const event = yield insert_event_1.default(entity, dates);
+    yield handle_locations_1.default(eventType, event);
+    yield readline_1.ask('Press enter key to continue');
+    return event;
 });

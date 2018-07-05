@@ -9,18 +9,31 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const utils_1 = require("./utils");
-exports.default = (event, startLocations, endLocations) => __awaiter(this, void 0, void 0, function* () {
-    startLocations = startLocations.map(bl => {
+exports.default = (event, startLocations, endLocations = []) => __awaiter(this, void 0, void 0, function* () {
+    startLocations = startLocations
+        .filter(sl => sl != null)
+        .map(bl => {
         bl.date = (event.date_min != null) ? event.date_min : event.date;
         bl.end_date = (event.date_min != null) ? event.date : null;
         return bl;
     });
-    endLocations = endLocations.map(dl => {
+    if (!endLocations.length) {
+        startLocations = startLocations.map(bl => {
+            bl.date = (event.date_min != null) ? event.date_min : event.date;
+            bl.end_date = (event.end_date_max != null) ? event.end_date_max : event.end_date;
+            return bl;
+        });
+    }
+    endLocations = endLocations
+        .filter(sl => sl != null)
+        .map(dl => {
         dl.date = event.end_date;
         dl.end_date = (event.end_date_max != null) ? event.end_date_max : null;
         return dl;
     });
-    const locations = startLocations.concat(endLocations);
+    const locations = startLocations.concat(endLocations).filter(l => l.date != null);
+    if (!locations.length)
+        return;
     const sql = `INSERT INTO event__location
 					(event_id, location_id, date, end_date)
 				VALUES

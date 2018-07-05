@@ -1,24 +1,26 @@
 import  { ask } from './readline'
 import chalk from 'chalk';
-import fetch from 'node-fetch'
+import { WdEntity } from './models'
+import { execFetch } from './utils'
+import { EventType } from './event';
 
-export class Entity {
-	description: string
-	id: string
-	label: string
-}
+const logOption = (index: string, label: string, description: string = '', id: string = '') =>
+	console.log(chalk`{cyan ${index}} {gray ${id}} ${label} {gray ${description}}`)
 
-export default async (): Promise<Entity> => {
-	const searchTerm = await ask(chalk`\n{yellow Search for: }`)
-	const response = await fetch(`https://www.wikidata.org/w/api.php?action=wbsearchentities&search=${searchTerm.trim()}&language=en&format=json`)
-	const searchResult = await response.json()
-	const entities: Entity[] = searchResult.search
+export default async (eventType?: EventType): Promise<WdEntity> => {
+	const type = (eventType == null) ? '' : ` ${eventType}`
+	const searchTerm = await ask(chalk`\n{yellow Search for${type}: }`)
 
-	if (!entities.length) {
-		console.error(chalk.yellow('\nNothing found\n'))
-	} else {
-		entities.forEach((ent, i) => console.log(chalk`{cyan ${i.toString()}} ${ent.label} {gray ${ent.description}}`))
+	if (searchTerm === '') return
+	const searchResult = await execFetch(`https://www.wikidata.org/w/api.php?action=wbsearchentities&search=${searchTerm.trim()}&language=en&format=json`)
+	const entities: WdEntity[] = searchResult.search
+
+	if (entities.length) {
+		entities.forEach((ent, i) => logOption(i.toString(), ent.label, ent.description, ent.id))
+		console.log(logOption('Q', 'Quit', ''))
 		const anwser = await ask('Enter a number: ')
-		return entities[parseInt(anwser, 10)]
+		const anwserIndex = parseInt(anwser, 10)
+		if (anwser.toUpperCase() === 'Q' || isNaN(anwserIndex)) return
+		return entities[anwserIndex]
 	}
 }

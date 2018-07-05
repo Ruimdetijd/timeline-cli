@@ -9,10 +9,12 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const readline_1 = require("./readline");
-const insert_event_tag_relations_1 = require("./insert-event-tag-relations");
+const insert_event_tag_relations_1 = require("./db/insert-event-tag-relations");
 const chalk_1 = require("chalk");
-const utils_1 = require("./utils");
-exports.default = (event) => __awaiter(this, void 0, void 0, function* () {
+const utils_1 = require("./db/utils");
+const addTags = (event) => __awaiter(this, void 0, void 0, function* () {
+    if (event == null)
+        return;
     const rows = yield utils_1.execSql(`SELECT * FROM tag`);
     let anwser = yield readline_1.ask(chalk_1.default `\n{yellow Choose tags:}\n${rows.map((r, i) => chalk_1.default `{cyan ${i.toString()}}:${r.label}`).join(', ')}\n`);
     if (anwser.trim() !== '') {
@@ -22,9 +24,11 @@ exports.default = (event) => __awaiter(this, void 0, void 0, function* () {
             .filter(id => !isNaN(id));
         if (tagIndices.length) {
             const confirmed = yield readline_1.confirm(chalk_1.default `Are these tags correct? ${tagIndices.map(t => rows[t].label).join(', ')} {cyan (yes)}`);
-            if (confirmed) {
-                insert_event_tag_relations_1.default(event.id, tagIndices.map((t, i) => rows[t].id));
-            }
+            if (confirmed)
+                yield insert_event_tag_relations_1.default(event.id, tagIndices.map((t, i) => rows[t].id));
+            else
+                yield addTags(event);
         }
     }
 });
+exports.default = addTags;

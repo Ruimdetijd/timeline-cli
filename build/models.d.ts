@@ -3,6 +3,12 @@ export declare class WdDate {
     granularity: string;
     timestamp: number;
 }
+export declare class WdEntity {
+    label: string;
+    description: string;
+    id: string;
+    constructor(entity: any);
+}
 export declare class WdLocation {
     coordinates: string;
     date?: number;
@@ -24,5 +30,6 @@ export declare class Ev3nt {
     end_date_max_granularity: string;
     id: string;
     label: string;
+    tags?: string[];
     wikidata_identifier: string;
 }

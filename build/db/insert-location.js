@@ -8,33 +8,29 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-const readline_1 = require("./readline");
 const chalk_1 = require("chalk");
 const utils_1 = require("./utils");
 exports.default = (event, location) => __awaiter(this, void 0, void 0, function* () {
-    if (event.wikidata_identifier == null)
+    if (location.coordinates == null)
         return;
     const sql = `INSERT INTO location
 					(label, description, coordinates, wikidata_identifier)
 				VALUES
-					('${location.label}', '${location.description}', ST_GeogFromText('SRID=4326;POINT(${location.coordinates})'), '${location.wikidata_identifier}')
-				ON CONFLICT (label)
+					($1, $2, ST_GeogFromText('SRID=4326;POINT(${location.coordinates.split(' ').reverse().join(' ')})'), $3)
+				ON CONFLICT (coordinates)
 				DO UPDATE SET
-					description = '${location.description}',
-					coordinates = ST_GeogFromText('SRID=4326;POINT(${location.coordinates})'),
-					wikidata_identifier = '${location.wikidata_identifier}'
+					label = $1,
+					description = $2,
+					wikidata_identifier = $3
 				RETURNING *`;
-    const confirmed = yield readline_1.confirm(chalk_1.default `\n{yellow About to insert location:}
+    const rows = yield utils_1.execSql(sql, [location.label, location.description, location.wikidata_identifier]);
+    if (rows.length) {
+        console.log(chalk_1.default `\n{green [DB] Inserted location:}
 {gray label}\t\t\t${location.label}
 {gray description}\t\t${location.description}
 {gray coordinates}\t\t${location.coordinates}
-{gray wikidata entity ID}\t${location.wikidata_identifier}\n\nIs it correct? {cyan (yes)}`);
-    if (confirmed) {
-        const rows = yield utils_1.execSql(sql);
-        if (rows.length) {
-            console.log(chalk_1.default `{green Location "${location.label}" inserted into db!}`);
-            location = rows[0];
-        }
+{gray wikidata entity ID}\t${location.wikidata_identifier}\n\n`);
+        location = rows[0];
     }
     return location;
 });

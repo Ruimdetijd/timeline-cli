@@ -1,1 +1,1 @@
-export default function main(): Promise<void>;
+export default function main(): Promise<string>;

@@ -9,12 +9,20 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const chalk_1 = require("chalk");
-const node_fetch_1 = require("node-fetch");
+const models_1 = require("./models");
+const utils_1 = require("./utils");
+const fetch_dates_1 = require("./fetch-dates");
 const propertyIdByName = {
     'place of birth': 'P19',
     'place of death': 'P20',
+    'location': 'P276',
     'date of birth': 'P569',
     'date of death': 'P570',
+    'point in time': 'P585',
+    'inception': 'P571',
+    'dissolved, abolished or demolished': 'P576',
+    'start time': 'P580',
+    'end time': 'P582',
     'coordinate location': 'P625',
 };
 const granularityByPrecision = {
@@ -30,8 +38,10 @@ const parseDataValueTime = (value) => {
         return;
     }
     const granularity = granularityByPrecision[value.precision];
-    const dateString = value.time.slice(1);
+    const bc = (value.time.charAt(0) === '-') ? '-' : '';
+    const dateString = (value.time.charAt(0) === '+' || value.time.charAt(0) === '-') ? value.time.slice(1) : value.time;
     let dateParts = dateString.split(/-|T/);
+    dateParts[0] = `${bc}${dateParts[0]}`;
     if (granularity === 'YEAR')
         dateParts = dateParts.slice(0, 1);
     else if (granularity === 'MONTH')
@@ -44,7 +54,7 @@ const parseDataValueTime = (value) => {
     return {
         dateString,
         granularity,
-        timestamp: Date.UTC(...dateParts)
+        timestamp: fetch_dates_1.setUTCDate(...dateParts)
     };
 };
 const parseDataValueEntity = (value) => {
@@ -53,7 +63,10 @@ const parseDataValueEntity = (value) => {
 const parseDateValueCoordinate = (value) => {
     return `${value.latitude} ${value.longitude}`;
 };
-const parseDataValue = ({ type, value }) => {
+const parseDataValue = (dataValue) => {
+    if (dataValue == null)
+        return null;
+    const { type, value } = dataValue;
     if (type === 'string')
         return value.value;
     if (type === 'time')
@@ -64,31 +77,34 @@ const parseDataValue = ({ type, value }) => {
         return parseDateValueCoordinate(value);
     console.error(chalk_1.default `{red Unknown data value type: "${type}"}`);
 };
-exports.fetchClaimValue = (wdEntity, wdPropertyName) => __awaiter(this, void 0, void 0, function* () {
+exports.fetchClaimValue = (wdEntityID, wdPropertyName) => __awaiter(this, void 0, void 0, function* () {
     const wdPropertyId = propertyIdByName[wdPropertyName];
-    const response = yield node_fetch_1.default(`https://www.wikidata.org/w/api.php?action=wbgetclaims&entity=${wdEntity}&property=${wdPropertyId}&format=json`);
-    const json = yield response.json();
-    return json.claims[wdPropertyId].map(c => parseDataValue(c.mainsnak.datavalue));
+    const json = yield utils_1.execFetch(`https://www.wikidata.org/w/api.php?action=wbgetclaims&entity=${wdEntityID}&property=${wdPropertyId}&format=json`);
+    if (!Object.keys(json.claims).length)
+        return [];
+    return json.claims[wdPropertyId].map(c => parseDataValue(c.mainsnak.datavalue)).filter(c => c != null);
 });
-exports.fetchEntities = (wdEntities) => __awaiter(this, void 0, void 0, function* () {
-    const response = yield node_fetch_1.default(`https://www.wikidata.org/w/api.php?action=wbgetentities&ids=${wdEntities.join('|')}&props=labels|descriptions&languages=en&format=json`);
-    const json = yield response.json();
-    return Object.keys(json.entities).map(k => json.entities[k]);
+exports.fetchEntities = (wdEntityIDs) => __awaiter(this, void 0, void 0, function* () {
+    if (!wdEntityIDs.length)
+        return [];
+    const json = yield utils_1.execFetch(`https://www.wikidata.org/w/api.php?action=wbgetentities&ids=${wdEntityIDs.join('|')}&props=labels|descriptions&languages=en&format=json`);
+    return Object.keys(json.entities).map(k => json.entities[k]).map(e => new models_1.WdEntity(e));
 });
-exports.getLocations = (wdEntity, wdPropertyName) => __awaiter(this, void 0, void 0, function* () {
-    const locationIds = yield exports.fetchClaimValue(wdEntity, wdPropertyName);
+exports.getLocations = (wdEntityID, wdPropertyName) => __awaiter(this, void 0, void 0, function* () {
+    const locationIds = yield exports.fetchClaimValue(wdEntityID, wdPropertyName);
     const locations = yield exports.fetchEntities(locationIds);
     const createLocation = (p) => __awaiter(this, void 0, void 0, function* () {
-        const label = p.labels.en.value;
+        const label = p.label;
         const rawCoordinates = yield exports.fetchClaimValue(p.id, 'coordinate location');
         let coordinates;
-        if (rawCoordinates.length > 1)
-            console.error(chalk_1.default `{red Multiple coordinates for location "${label}"}`);
-        else if (rawCoordinates.length)
+        if (rawCoordinates.length) {
+            if (rawCoordinates.length > 1)
+                utils_1.logError('getLocations', [`Multiple coordinates for location "${label}"`, `values: ${JSON.stringify(rawCoordinates)}`]);
             coordinates = rawCoordinates[0];
+        }
         const location = {
             coordinates,
-            description: p.descriptions.en.value,
+            description: p.description,
             label,
             wikidata_identifier: p.id,
         };

@@ -1,10 +1,12 @@
 import { ask, confirm } from "./readline"
-import insertEventTagRelations from './insert-event-tag-relations'
+import insertEventTagRelations from './db/insert-event-tag-relations'
 import chalk from "chalk"
-import { execSql } from "./utils"
 import { Ev3nt } from "./models"
+import { execSql } from "./db/utils";
 
-export default async (event: Ev3nt) => {
+const addTags = async (event: Ev3nt) => {
+	if (event == null) return
+
 	const rows = await execSql(`SELECT * FROM tag`)
 
 	let anwser = await ask(chalk`\n{yellow Choose tags:}\n${rows.map((r, i) => chalk`{cyan ${i.toString()}}:${r.label}`).join(', ')}\n`)
@@ -17,9 +19,9 @@ export default async (event: Ev3nt) => {
 
 		if (tagIndices.length) {
 			const confirmed = await confirm(chalk`Are these tags correct? ${tagIndices.map(t => rows[t].label).join(', ')} {cyan (yes)}`)
-			if (confirmed) {
-				insertEventTagRelations(event.id, tagIndices.map((t, i) => rows[t].id))
-			}
+			if (confirmed) await insertEventTagRelations(event.id, tagIndices.map((t, i) => rows[t].id))
+			else await addTags(event)
 		}
 	}
 }
+export default addTags

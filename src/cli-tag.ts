@@ -1,9 +1,10 @@
 import { confirm } from './readline'
 import searchEntity from "./search-entity";
-import { execSql } from './utils';
+import { execSql } from './db/utils';
 
-export default async function main() {
+export default async function main(): Promise<string> {
 	const entity = await searchEntity()
+	if (entity == null) return
 
 	const confirmed = await confirm(`Is this correct?\n${entity.id}, ${entity.label}, ${entity.description}\n(yes)\n`)
 
@@ -13,6 +14,6 @@ export default async function main() {
 					VALUES
 						($1, $2, $3)`
 		const rows = await execSql(sql, [entity.label, entity.description, entity.id])
-		if (rows.length === 1) console.log('Tag inserted!')
+		if (rows.length === 1) return 'Inserted tag'
 	}
 }

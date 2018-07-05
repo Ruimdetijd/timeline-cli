@@ -1,12 +1,19 @@
 import chalk from 'chalk'
-import fetch from 'node-fetch'
-import { WdDate, WdLocation } from './models'
+import { WdDate, WdLocation, WdEntity } from './models'
+import { execFetch, logError } from './utils';
+import { setUTCDate } from './fetch-dates'
 
 const propertyIdByName: { [key: string]: string } = {
 	'place of birth': 'P19',
 	'place of death': 'P20',
+	'location': 'P276',
 	'date of birth': 'P569',
 	'date of death': 'P570',
+	'point in time': 'P585',
+	'inception': 'P571',
+	'dissolved, abolished or demolished': 'P576',
+	'start time': 'P580',
+	'end time': 'P582',
 	'coordinate location': 'P625',
 }
 
@@ -26,8 +33,10 @@ const parseDataValueTime = (value): WdDate => {
 
 	const granularity = granularityByPrecision[value.precision]
 
-	const dateString = value.time.slice(1)
+	const bc = (value.time.charAt(0) === '-') ? '-' : ''
+	const dateString = (value.time.charAt(0) === '+' || value.time.charAt(0) === '-') ? value.time.slice(1) : value.time
 	let dateParts = dateString.split(/-|T/)
+	dateParts[0] = `${bc}${dateParts[0]}`
 	if (granularity === 'YEAR') dateParts = dateParts.slice(0, 1)
 	else if (granularity === 'MONTH') dateParts = dateParts.slice(0, 2)
 	else if (granularity === 'DAY') dateParts = dateParts.slice(0, 3)
@@ -40,7 +49,7 @@ const parseDataValueTime = (value): WdDate => {
 		dateString,
 		granularity,
 		// @ts-ignore
-		timestamp: Date.UTC(...dateParts)
+		timestamp: setUTCDate(...dateParts)
 	}
 }
 
@@ -52,7 +61,9 @@ const parseDateValueCoordinate = (value) => {
 	return `${value.latitude} ${value.longitude}`
 }
 
-const parseDataValue = ({ type, value }) => {
+const parseDataValue = (dataValue) => {
+	if (dataValue == null) return null
+	const { type, value } = dataValue
 	if (type === 'string') return value.value
 	if (type === 'time') return parseDataValueTime(value)
 	if (type === 'wikibase-entityid') return parseDataValueEntity(value)
@@ -60,35 +71,36 @@ const parseDataValue = ({ type, value }) => {
 	console.error(chalk`{red Unknown data value type: "${type}"}`)
 }
 
-export const fetchClaimValue = async (wdEntity: string, wdPropertyName: string): Promise<any[]> => {
+export const fetchClaimValue = async (wdEntityID: string, wdPropertyName: string): Promise<any[]> => {
 	const wdPropertyId = propertyIdByName[wdPropertyName]
-	const response = await fetch(`https://www.wikidata.org/w/api.php?action=wbgetclaims&entity=${wdEntity}&property=${wdPropertyId}&format=json`)
-	const json = await response.json()
-	return json.claims[wdPropertyId].map(c => parseDataValue(c.mainsnak.datavalue))
+	const json = await execFetch(`https://www.wikidata.org/w/api.php?action=wbgetclaims&entity=${wdEntityID}&property=${wdPropertyId}&format=json`)
+	if (!Object.keys(json.claims).length) return []
+	return json.claims[wdPropertyId].map(c => parseDataValue(c.mainsnak.datavalue)).filter(c => c != null)
 }
 
-export const fetchEntities = async (wdEntities: string[]): Promise<any[]> => {
-	const response = await fetch(`https://www.wikidata.org/w/api.php?action=wbgetentities&ids=${wdEntities.join('|')}&props=labels|descriptions&languages=en&format=json`)
-	const json = await response.json()
-	return Object.keys(json.entities).map(k => json.entities[k])
+export const fetchEntities = async (wdEntityIDs: string[]): Promise<WdEntity[]> => {
+	if (!wdEntityIDs.length) return []
+	const json = await execFetch(`https://www.wikidata.org/w/api.php?action=wbgetentities&ids=${wdEntityIDs.join('|')}&props=labels|descriptions&languages=en&format=json`)
+	return Object.keys(json.entities).map(k => json.entities[k]).map(e => new WdEntity(e))
 }
 
-export const getLocations = async (wdEntity: string, wdPropertyName: string): Promise<WdLocation[]> => {
-	const locationIds = await fetchClaimValue(wdEntity, wdPropertyName)
+export const getLocations = async (wdEntityID: string, wdPropertyName: string): Promise<WdLocation[]> => {
+	const locationIds = await fetchClaimValue(wdEntityID, wdPropertyName)
 	const locations = await fetchEntities(locationIds)
 
-	const createLocation = async (p): Promise<WdLocation> => {
-		const label = p.labels.en.value
+	const createLocation = async (p: WdEntity): Promise<WdLocation> => {
+		const label = p.label
 
 		const rawCoordinates = await fetchClaimValue(p.id, 'coordinate location')
 		let coordinates: string
-		if (rawCoordinates.length > 1) console.error(chalk`{red Multiple coordinates for location "${label}"}`)
-		else if (rawCoordinates.length) coordinates = rawCoordinates[0]
-
+		if (rawCoordinates.length) {
+			if (rawCoordinates.length > 1) logError('getLocations', [`Multiple coordinates for location "${label}"`, `values: ${JSON.stringify(rawCoordinates)}`])
+			coordinates = rawCoordinates[0]
+		}
 
 		const location: WdLocation = {
 			coordinates, 
-			description: p.descriptions.en.value,
+			description: p.description,
 			label,
 			wikidata_identifier: p.id,
 		}

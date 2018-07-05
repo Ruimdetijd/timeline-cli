@@ -1,4 +1,4 @@
-import { WdLocation } from './models';
-export declare const fetchClaimValue: (wdEntity: string, wdPropertyName: string) => Promise<any[]>;
-export declare const fetchEntities: (wdEntities: string[]) => Promise<any[]>;
-export declare const getLocations: (wdEntity: string, wdPropertyName: string) => Promise<WdLocation[]>;
+import { WdLocation, WdEntity } from './models';
+export declare const fetchClaimValue: (wdEntityID: string, wdPropertyName: string) => Promise<any[]>;
+export declare const fetchEntities: (wdEntityIDs: string[]) => Promise<WdEntity[]>;
+export declare const getLocations: (wdEntityID: string, wdPropertyName: string) => Promise<WdLocation[]>;
