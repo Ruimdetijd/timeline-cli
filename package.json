@@ -1,5 +1,5 @@
 {
-  "name": "timeline-cli",
+  "name": "civslog-cli",
   "version": "1.0.0",
   "description": "",
   "main": "build/index.js",
