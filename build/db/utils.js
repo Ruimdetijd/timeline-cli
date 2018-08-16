@@ -10,6 +10,10 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 Object.defineProperty(exports, "__esModule", { value: true });
 const pg_1 = require("pg");
 const utils_1 = require("../utils");
+const fs = require("fs");
+const errorLogPath = `${process.cwd()}/error.log`;
+fs.openSync(errorLogPath, 'w');
+const stream = fs.createWriteStream(errorLogPath, { flags: 'a' });
 exports.selectOne = (table, field, value) => __awaiter(this, void 0, void 0, function* () {
     const sql = `SELECT *
 				FROM ${table}
@@ -26,6 +30,7 @@ exports.execSql = (sql, values = []) => __awaiter(this, void 0, void 0, function
     }
     catch (err) {
         utils_1.logError('execSql', ['SQL execution failed', sql, values.map((v, i) => `${i}: ${v}\n`).join(''), err]);
+        stream.write(JSON.stringify(values) + '\n');
     }
     yield pool.end();
     return rows;

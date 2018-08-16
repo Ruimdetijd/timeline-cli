@@ -12,11 +12,13 @@ const onDate = (a, b) => {
 const startDatePropertyByEventType: { [k in EventType]: string } = {
 	'human': 'date of birth',
 	'battle': 'start time',
+	'war': 'start time',
 }
 
 const endDatePropertyByEventType: { [k in EventType]: string } = {
 	'human': 'date of death', 
 	'battle': 'end time',
+	'war': 'end time',
 }
 
 export const setUTCDate = (year: number, month: number = 0, day: number = 1, hour: number = 0, minutes: number = 0, seconds: number = 0, milliseconds: number = 0) => {

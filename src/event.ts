@@ -6,7 +6,7 @@ import { Ev3nt } from './models';
 import handleEvent from './handle-event'
 import { selectOne } from './db/utils';
 
-export type EventType = 'human' | 'battle'
+export type EventType = 'human' | 'battle' | 'war'
 
 export default async function main(eventType: EventType): Promise<string> {
 	const entity = await searchEntity(eventType)

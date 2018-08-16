@@ -10,6 +10,6 @@ export default async (eventType: EventType, entity: WdEntity): Promise<Ev3nt> =>
 	const dates = await fetchDates(eventType, entity.id)
 	const event = await insertEvent(entity, dates)
 	await handleLocations(eventType, event)
-	await ask('Press enter key to continue')
+	// await ask('Press enter key to continue')
 	return event
 }

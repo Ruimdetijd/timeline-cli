@@ -21,10 +21,12 @@ const onDate = (a, b) => {
 const startDatePropertyByEventType = {
     'human': 'date of birth',
     'battle': 'start time',
+    'war': 'start time',
 };
 const endDatePropertyByEventType = {
     'human': 'date of death',
     'battle': 'end time',
+    'war': 'end time',
 };
 exports.setUTCDate = (year, month = 0, day = 1, hour = 0, minutes = 0, seconds = 0, milliseconds = 0) => {
     let date = Date.UTC(year, month, day, hour, minutes, seconds, milliseconds);

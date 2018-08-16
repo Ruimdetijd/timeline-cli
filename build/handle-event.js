@@ -11,13 +11,11 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const fetch_dates_1 = require("./fetch-dates");
 const insert_event_1 = require("./db/insert-event");
 const handle_locations_1 = require("./handle-locations");
-const readline_1 = require("./readline");
 exports.default = (eventType, entity) => __awaiter(this, void 0, void 0, function* () {
     if (eventType == null || entity == null)
         return null;
     const dates = yield fetch_dates_1.default(eventType, entity.id);
     const event = yield insert_event_1.default(entity, dates);
     yield handle_locations_1.default(eventType, event);
-    yield readline_1.ask('Press enter key to continue');
     return event;
 });

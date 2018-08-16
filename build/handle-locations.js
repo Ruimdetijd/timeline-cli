@@ -21,7 +21,7 @@ exports.default = (eventType, event) => __awaiter(this, void 0, void 0, function
         locations = yield wd_request_1.getLocations(event.wikidata_identifier, 'place of birth');
         endLocations = yield wd_request_1.getLocations(event.wikidata_identifier, 'place of death');
     }
-    else if (eventType === 'battle') {
+    else if (eventType === 'battle' || eventType === 'war') {
         const coordinates = yield wd_request_1.fetchClaimValue(event.wikidata_identifier, 'coordinate location');
         locations = coordinates
             .map(coor => {

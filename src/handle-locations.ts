@@ -14,7 +14,7 @@ export default async (eventType: EventType, event: Ev3nt) => {
 		// Fetch and insert locations in to the database
 		locations = await getLocations(event.wikidata_identifier, 'place of birth')
 		endLocations = await getLocations(event.wikidata_identifier, 'place of death')
-	} else if (eventType === 'battle') {
+	} else if (eventType === 'battle' || eventType === 'war') {
 		const coordinates = await fetchClaimValue(event.wikidata_identifier, 'coordinate location')
 		locations = coordinates
 			.map(coor => {
