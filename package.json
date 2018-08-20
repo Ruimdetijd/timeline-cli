@@ -10,8 +10,8 @@
     "prewatch": "rm -rf ./build",
     "watch": "tsc -w"
   },
-  "author": "",
-  "license": "ISC",
+  "author": "Gijsjan Brouwer",
+  "license": "GPL-3.0-or-later",
   "devDependencies": {
     "@types/node": "^9.6.0",
     "@types/node-fetch": "^2.1.2",
