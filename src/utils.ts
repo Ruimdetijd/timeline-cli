@@ -1,5 +1,6 @@
 import chalk from "chalk"
-import fetch from 'node-fetch'
+import fetch, { Response } from 'node-fetch'
+import { WdEntity, Ev3nt } from "./models";
 
 export const wait = ms => new Promise(resolve => setTimeout(resolve, ms))
 
@@ -23,17 +24,44 @@ export const logHeader = (header) => {
 	console.log(chalk`{yellow.bold [Timeline CLI] ${header}\n}`)
 }
 
-export const execFetch = async (url: string, options = {}) => {
-	let body = null
-	const throwError = (err) => console.log(chalk`{red [execFetch] Fetch execution failed}\n`, chalk`{gray [ERROR]\n${err}\n\n[URL]\n${url}}`)	
+export async function execFetch(url: string, options = {}): Promise<[any, Response]> {
+	let body: any
+	let response: Response
 
 	try {
-		const response = await fetch(url, options)
-		body = await response.json()
-		if (body.hasOwnProperty('error')) throwError(JSON.stringify(body.error, null, 2))
+		response = await fetch(url, options)
+		if (response.headers.get('content-length') > '0') {
+			body = await response.json()
+		}
 	} catch (err) {
-		throwError(err)
+		console.log(chalk`{red [execFetch] Fetch execution failed}\n`, chalk`{gray [ERROR]\n${err}\n\n[URL]\n${url}}`)	
 	}
 
-	return body
+	return [body, response]
+}
+
+export async function execPost(url: string, jsObject?: any): Promise<[any, Response]> {
+	const options: RequestInit = {
+		method: 'POST',
+	}
+
+	if (jsObject != null) {
+		options.body = JSON.stringify(jsObject)
+		options.headers = { 'Content-type': 'application/json' }
+	}
+
+	return await execFetch(url, options)
+}
+
+export function entityToRow(entity: WdEntity, index) {
+	return [index, entity.id, entity.label, entity.description]
+}
+
+export function eventToRow(event: Ev3nt, index) {
+	const descr = event.description === null ? '' : event.description
+	return [index, event.wikidata_identifier, event.label, descr]
+}
+
+export function tagToRow(tag, index) {
+	return [index, tag.label]
 }

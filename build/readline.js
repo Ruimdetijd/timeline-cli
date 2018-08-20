@@ -9,10 +9,13 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const readline = require("readline");
+const chalk_1 = require("chalk");
 exports.ask = (question) => new Promise((resolve, reject) => {
+    question = chalk_1.default `{cyan.bold ${question}}`;
     const rl = readline.createInterface({
         input: process.stdin,
         output: process.stdout,
+        terminal: false,
     });
     rl.question(question, (anwser) => {
         resolve(anwser);

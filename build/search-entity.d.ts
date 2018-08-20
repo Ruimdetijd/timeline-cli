@@ -1,4 +1,4 @@
 import { WdEntity } from './models';
-import { EventType } from './event';
-declare const _default: (eventType?: EventType) => Promise<WdEntity>;
+import { MenuAction } from '.';
+declare const _default: () => Promise<WdEntity | MenuAction>;
 export default _default;

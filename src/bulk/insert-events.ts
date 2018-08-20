@@ -1,38 +1,29 @@
 #! /usr/bin/env node
 
-// TODO list errors in file
-
 import * as fs from 'fs'
 import * as path from 'path'
 import * as dotenv from 'dotenv'
 dotenv.config({ path: path.resolve(__dirname, '../../.env') })
 import chalk from 'chalk'
-import { fetchEntities } from '../wd-request'
-import handleEvent from '../handle-event'
-import insertEventTagRelations from '../db/insert-event-tag-relations'
-import { selectOne } from '../db/utils'
-import { EventType } from '../event';
+import { civslogServerURL } from '../constants';
+import { execFetch } from '../utils';
 const jsonPath = path.resolve(__dirname, '../../war-ids.json')
 const IDs = JSON.parse(fs.readFileSync(jsonPath, 'utf8')).slice(260)
-
-const EVENT_TYPE: EventType = 'war'
 
 let i = 0
 
 // Fetches info from Wikidata and adds it to the db
-const handleWikidataID = async (eventTypeID: number) => {
+const handleWikidataID = async () => {
   const id = IDs[i]
 
   // Check if the event is already inserted in the database
-  const row = await selectOne('event', 'wikidata_identifier', id)
+	const [existingEvent] = await execFetch(`${civslogServerURL}/events/${id}`)
 
   // Only fetch from wikidata if the battle is unkown
-  if (row == null) {
-    const entity = await fetchEntities([id])
-    const event = await handleEvent(EVENT_TYPE, entity[0])
-    if (event != null) await insertEventTagRelations(event.id, [eventTypeID])
+  if (existingEvent == null) {
+	  await execFetch(`${civslogServerURL}/events/${id}`, { method: 'POST' })
   } else {
-    console.log(chalk.yellow(`'${row.label}' (${row.wikidata_identifier}) already exists!`))
+    console.log(chalk.yellow(`'${existingEvent.label}' (${existingEvent.wikidata_identifier}) already exists!`))
   }
 
   if (i < IDs.length - 1) {
@@ -41,22 +32,14 @@ const handleWikidataID = async (eventTypeID: number) => {
     console.log(chalk.cyan(`Number: ${i}`))
 
     // If the battle is already known, we do not have to relieve the Wikidata server
-    const wait = (row == null) ? 1000 : 0
+    const wait = (existingEvent == null) ? 1000 : 0
 
     // After the `wait`, insert the next battle
-    setTimeout(() => handleWikidataID(eventTypeID), wait)
+    setTimeout(() => handleWikidataID(), wait)
   }
 }
 
-// handleWikidataID()
-selectOne('tag', 'label', EVENT_TYPE).then((row) => {
-  if (row) {
-    handleWikidataID(row.id)
-  }
-})
-
-
-
+handleWikidataID()
 
 /*
 # The battles array was downloaded from Wikidata:

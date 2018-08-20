@@ -12,23 +12,28 @@ const readline_1 = require("./readline");
 const chalk_1 = require("chalk");
 const constants_1 = require("./constants");
 const utils_1 = require("./utils");
+const Table = require("tty-table");
+const TABLE_HEADER = [
+    { value: 'no', color: 'cyan', width: 8 },
+    { value: 'label', align: 'left', width: 24 },
+];
 function addTagsToEvent(event) {
     return __awaiter(this, void 0, void 0, function* () {
         if (event == null)
             return;
-        const tags = yield utils_1.execFetch(`${constants_1.civslogServerURL}/tags`);
-        let anwser = yield readline_1.ask(chalk_1.default `\n{yellow Choose tags:}\n${tags.map((r, i) => chalk_1.default `{cyan ${i.toString()}}:${r.label}`).join(', ')}\n`);
+        const [tags] = yield utils_1.execFetch(`${constants_1.civslogServerURL}/tags`);
+        const table = Table(TABLE_HEADER, tags.map(utils_1.tagToRow));
+        console.log(table.render());
+        let anwser = yield readline_1.ask(chalk_1.default `\n{yellow Choose tags: }`);
         if (anwser.trim() !== '') {
             const tagIndices = anwser
                 .split(',')
-                .map((t, i) => parseInt(t.trim(), 10))
+                .map((t) => parseInt(t.trim(), 10))
                 .filter(id => !isNaN(id));
             if (tagIndices.length) {
                 const confirmed = yield readline_1.confirm(chalk_1.default `Are these tags correct? ${tagIndices.map(t => tags[t].label).join(', ')} {cyan (yes)}`);
                 if (confirmed)
-                    console.log('NOT IMPLEMENTED');
-                else
-                    yield addTagsToEvent(event);
+                    yield utils_1.execPost(`${constants_1.civslogServerURL}/events/${event.wikidata_identifier}/tags`, tagIndices.map((t, i) => tags[t].id));
             }
         }
     });

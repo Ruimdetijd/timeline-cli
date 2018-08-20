@@ -1,28 +1,89 @@
 import chalk from 'chalk'
 import { ask } from './readline'
-import insertEvent from './event'
-import insertTag from './cli-tag'
-import listEventsWithoutDates from './list-events-without-date'
-import listEventsWithoutLocation from './list-events-without-location'
-import { logHeader, logMessage, clearLog, execFetch } from './utils'
-// import { wikiApiURL } from './constants';
-import * as wdEdit from 'wikidata-edit'
-// import { wikiApiURL } from './constants';
+import searchWikidata from './search-wikidata'
+import handleTag from './handle-tag'
+import listEventsWithout from './list-events-without'
+import { logHeader, logMessage, clearLog } from './utils'
 
 const menuOptions = [
-	'Insert a human',
-	'Insert a war, military campaign, military operation or battle',
+	'Insert or update an event',
 	'Insert a tag',
 	'List events without a date',
-	'List events without a location'
+	'List events without a location',
+	'List events without a label',
 ]
 
-const login = async () => {
-	const wdEditor = await wdEdit({
-		username: process.env.WDUSER,
-		password: process.env.WDPASSWORD,
-		userAgent: 'timeline-cli:1.0.0 (https://github.com/chronovis/timeline-cli'
-	})
+export enum MenuAction {
+	BACK = 'BACK',
+	RELOAD = 'RELOAD',
+	QUIT = 'QUIT',
+}
+type Message = string | MenuAction
+
+const mainMenu = async (message: Message = '', option?: string) => {
+	clearLog()
+	logMessage(message)
+
+	if (option === '0') {
+		logHeader('Insert or update an event')
+		message = await searchWikidata()
+	} else if (option === '1') {
+		logHeader('Insert a tag')
+		message = await handleTag()
+	} else if (option === '2') {
+		logHeader('Events without dates')
+		message = await listEventsWithout('date')
+	} else if (option === '3') {
+		logHeader('Events without a location')
+		message = await listEventsWithout('location')
+	} else if (option === '4') {
+		logHeader('Events without a label')
+		message = await listEventsWithout('label')
+	} else if (option === 'q' || option === 'Q') {
+		message = MenuAction.QUIT
+	} else {
+		const opts = menuOptions
+			.map((opt, i) => chalk`{cyan ${i.toString()}} ${opt}`).join('\n')
+			.concat(chalk`\n\n{cyan Q} Quit`)
+		logHeader('Main Menu')
+		console.log(opts)
+		option = await ask(`\nChoose an option: `)
+	}
+
+	if (message === MenuAction.BACK || message === MenuAction.RELOAD) {
+		message = null
+		option = null
+	}
+
+	if (message === MenuAction.QUIT) {
+		console.log(chalk`\n{green.bold Good bye!}\n`)
+		process.exit(1)
+	}
+
+	await mainMenu(message, option)
+}
+
+export default mainMenu
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+// const login = async () => {
+// 	const wdEditor = await wdEdit({
+// 		username: process.env.WDUSER,
+// 		password: process.env.WDPASSWORD,
+// 		userAgent: 'timeline-cli:1.0.0 (https://github.com/chronovis/timeline-cli'
+// 	})
 
 	// wdEditor.claim.add('Q4115189', 'P569', { time: '1802-01-05', precision: 11 })
 	// wdEditor.claim.update('Q4115189', 'P570', null, { time: '1824-01-05', precision: 11 })
@@ -46,35 +107,4 @@ const login = async () => {
 	// 	}
 	// )
 	// console.log(loginResponse)
-}
-
-const mainMenu = async (message: string = '') => {
-	// await login()
-	const opts = menuOptions
-		.map((opt, i) => chalk`{cyan ${i.toString()}} ${opt}`).join('\n')
-		.concat(chalk`\n{cyan Q} Quit`)
-	clearLog()
-	logMessage(message)
-	logHeader('Main Menu')
-	console.log(opts)
-	const option = await ask(`\nChoose an option: `)
-
-	if (option === '0') message = await insertEvent('human')
-	if (option === '1') message = await insertEvent('battle')
-	else if (option === '2') message = await insertTag()
-	else if (option === '3') {
-		clearLog()
-		logHeader('Events without dates')
-		message = await listEventsWithoutDates()
-	} else if (option === '4') {
-		clearLog()
-		logHeader('Events without a location')
-		message = await listEventsWithoutLocation()
-	} else if (option.toUpperCase() === 'Q') {
-		console.log(chalk`\n{green.bold Good bye!}\n`)
-		process.exit(1)
-	}
-	await mainMenu(message)
-}
-
-export default mainMenu
+// }

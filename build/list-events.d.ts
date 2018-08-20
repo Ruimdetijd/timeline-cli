@@ -1,3 +1,4 @@
 import { Ev3nt } from './models';
-declare const _default: (where: string, limit?: number) => Promise<Ev3nt>;
+import { MenuAction } from '.';
+declare const _default: (events: Ev3nt[], count: number) => Promise<Ev3nt | MenuAction>;
 export default _default;

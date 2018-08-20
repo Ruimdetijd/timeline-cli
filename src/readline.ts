@@ -1,9 +1,13 @@
 import * as readline from 'readline'
+import chalk from 'chalk';
 
 export const ask = (question: string) => new Promise<string>((resolve, reject) => {
+	question = chalk`{cyan.bold ${question}}`
+
 	const rl = readline.createInterface({
 		input: process.stdin,
 		output: process.stdout,
+		terminal: false,
 	})
 
 	rl.question(question, (anwser) => {

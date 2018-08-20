@@ -14,35 +14,25 @@ const path = require("path");
 const dotenv = require("dotenv");
 dotenv.config({ path: path.resolve(__dirname, '../../.env') });
 const chalk_1 = require("chalk");
-const wd_request_1 = require("../wd-request");
-const handle_event_1 = require("../handle-event");
-const insert_event_tag_relations_1 = require("../db/insert-event-tag-relations");
-const utils_1 = require("../db/utils");
+const constants_1 = require("../constants");
+const utils_1 = require("../utils");
 const jsonPath = path.resolve(__dirname, '../../war-ids.json');
 const IDs = JSON.parse(fs.readFileSync(jsonPath, 'utf8')).slice(260);
-const EVENT_TYPE = 'war';
 let i = 0;
-const handleWikidataID = (eventTypeID) => __awaiter(this, void 0, void 0, function* () {
+const handleWikidataID = () => __awaiter(this, void 0, void 0, function* () {
     const id = IDs[i];
-    const row = yield utils_1.selectOne('event', 'wikidata_identifier', id);
-    if (row == null) {
-        const entity = yield wd_request_1.fetchEntities([id]);
-        const event = yield handle_event_1.default(EVENT_TYPE, entity[0]);
-        if (event != null)
-            yield insert_event_tag_relations_1.default(event.id, [eventTypeID]);
+    const [existingEvent] = yield utils_1.execFetch(`${constants_1.civslogServerURL}/events/${id}`);
+    if (existingEvent == null) {
+        yield utils_1.execFetch(`${constants_1.civslogServerURL}/events/${id}`, { method: 'POST' });
     }
     else {
-        console.log(chalk_1.default.yellow(`'${row.label}' (${row.wikidata_identifier}) already exists!`));
+        console.log(chalk_1.default.yellow(`'${existingEvent.label}' (${existingEvent.wikidata_identifier}) already exists!`));
     }
     if (i < IDs.length - 1) {
         i++;
         console.log(chalk_1.default.cyan(`Number: ${i}`));
-        const wait = (row == null) ? 1000 : 0;
-        setTimeout(() => handleWikidataID(eventTypeID), wait);
+        const wait = (existingEvent == null) ? 1000 : 0;
+        setTimeout(() => handleWikidataID(), wait);
     }
 });
-utils_1.selectOne('tag', 'label', EVENT_TYPE).then((row) => {
-    if (row) {
-        handleWikidataID(row.id);
-    }
-});
+handleWikidataID();

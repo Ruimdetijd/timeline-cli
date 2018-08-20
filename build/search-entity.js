@@ -11,21 +11,35 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const readline_1 = require("./readline");
 const chalk_1 = require("chalk");
 const utils_1 = require("./utils");
-const logOption = (index, label, description = '', id = '') => console.log(chalk_1.default `{cyan ${index}} {gray ${id}} ${label} {gray ${description}}`);
-exports.default = (eventType) => __awaiter(this, void 0, void 0, function* () {
-    const type = (eventType == null) ? '' : ` ${eventType}`;
-    const searchTerm = yield readline_1.ask(chalk_1.default `\n{yellow Search for${type}: }`);
+const _1 = require(".");
+const Table = require("tty-table");
+const constants_1 = require("./constants");
+function logOption(index, label, description = '', id = '') {
+    console.log(chalk_1.default `{cyan ${index}} {gray ${id}} ${label} {gray ${description}}`);
+}
+exports.default = () => __awaiter(this, void 0, void 0, function* () {
+    const searchTerm = yield readline_1.ask('Search for: ');
     if (searchTerm === '')
         return;
-    const searchResult = yield utils_1.execFetch(`https://www.wikidata.org/w/api.php?action=wbsearchentities&search=${searchTerm.trim()}&language=en&format=json`);
+    const [searchResult] = yield utils_1.execFetch(`https://www.wikidata.org/w/api.php?action=wbsearchentities&search=${searchTerm.trim()}&language=en&format=json`);
     const entities = searchResult.search;
     if (entities.length) {
-        entities.forEach((ent, i) => logOption(i.toString(), ent.label, ent.description, ent.id));
-        console.log(logOption('Q', 'Quit', ''));
-        const anwser = yield readline_1.ask('Enter a number: ');
+        console.log('');
+        const table = Table(constants_1.TABLE_HEADER, entities.map(utils_1.entityToRow));
+        console.log(table.render());
+        console.log('');
+        logOption('B', 'Back');
+        logOption('Q', 'Quit');
+        console.log('');
+        const anwser = yield readline_1.ask('Enter a number to insert/update event: ');
         const anwserIndex = parseInt(anwser, 10);
-        if (anwser.toUpperCase() === 'Q' || isNaN(anwserIndex))
-            return;
+        console.log(anwserIndex);
+        if (isNaN(anwserIndex))
+            return _1.MenuAction.RELOAD;
+        if (anwser.toUpperCase() === 'B')
+            return _1.MenuAction.BACK;
+        if (anwser.toUpperCase() === 'Q')
+            return _1.MenuAction.QUIT;
         return entities[anwserIndex];
     }
 });

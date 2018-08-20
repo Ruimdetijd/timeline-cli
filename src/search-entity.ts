@@ -1,26 +1,36 @@
 import  { ask } from './readline'
 import chalk from 'chalk';
 import { WdEntity } from './models'
-import { execFetch } from './utils'
-import { EventType } from './event';
+import { execFetch, entityToRow } from './utils'
+import { MenuAction } from '.'
+import * as Table from 'tty-table'
+import { TABLE_HEADER } from './constants';
 
-const logOption = (index: string, label: string, description: string = '', id: string = '') =>
+function logOption(index: string, label: string, description: string = '', id: string = '') {
 	console.log(chalk`{cyan ${index}} {gray ${id}} ${label} {gray ${description}}`)
+}
 
-export default async (eventType?: EventType): Promise<WdEntity> => {
-	const type = (eventType == null) ? '' : ` ${eventType}`
-	const searchTerm = await ask(chalk`\n{yellow Search for${type}: }`)
+export default async (): Promise<WdEntity | MenuAction> => {
+	const searchTerm = await ask('Search for: ')
 
 	if (searchTerm === '') return
-	const searchResult = await execFetch(`https://www.wikidata.org/w/api.php?action=wbsearchentities&search=${searchTerm.trim()}&language=en&format=json`)
+	const [searchResult] = await execFetch(`https://www.wikidata.org/w/api.php?action=wbsearchentities&search=${searchTerm.trim()}&language=en&format=json`)
 	const entities: WdEntity[] = searchResult.search
 
 	if (entities.length) {
-		entities.forEach((ent, i) => logOption(i.toString(), ent.label, ent.description, ent.id))
-		console.log(logOption('Q', 'Quit', ''))
-		const anwser = await ask('Enter a number: ')
+		console.log('')
+		const table = Table(TABLE_HEADER, entities.map(entityToRow))
+		console.log(table.render())
+		console.log('')
+		logOption('B', 'Back')
+		logOption('Q', 'Quit')
+		console.log('')
+		const anwser = await ask('Enter a number to insert/update event: ')
 		const anwserIndex = parseInt(anwser, 10)
-		if (anwser.toUpperCase() === 'Q' || isNaN(anwserIndex)) return
+		console.log(anwserIndex)
+		if (isNaN(anwserIndex)) return MenuAction.RELOAD
+		if (anwser.toUpperCase() === 'B') return MenuAction.BACK
+		if (anwser.toUpperCase() === 'Q') return MenuAction.QUIT
 		return entities[anwserIndex]
 	}
 }

@@ -27,17 +27,46 @@ exports.logHeader = (header) => {
         return;
     console.log(chalk_1.default `{yellow.bold [Timeline CLI] ${header}\n}`);
 };
-exports.execFetch = (url, options = {}) => __awaiter(this, void 0, void 0, function* () {
-    let body = null;
-    const throwError = (err) => console.log(chalk_1.default `{red [execFetch] Fetch execution failed}\n`, chalk_1.default `{gray [ERROR]\n${err}\n\n[URL]\n${url}}`);
-    try {
-        const response = yield node_fetch_1.default(url, options);
-        body = yield response.json();
-        if (body.hasOwnProperty('error'))
-            throwError(JSON.stringify(body.error, null, 2));
-    }
-    catch (err) {
-        throwError(err);
-    }
-    return body;
-});
+function execFetch(url, options = {}) {
+    return __awaiter(this, void 0, void 0, function* () {
+        let body;
+        let response;
+        try {
+            response = yield node_fetch_1.default(url, options);
+            if (response.headers.get('content-length') > '0') {
+                body = yield response.json();
+            }
+        }
+        catch (err) {
+            console.log(chalk_1.default `{red [execFetch] Fetch execution failed}\n`, chalk_1.default `{gray [ERROR]\n${err}\n\n[URL]\n${url}}`);
+        }
+        return [body, response];
+    });
+}
+exports.execFetch = execFetch;
+function execPost(url, jsObject) {
+    return __awaiter(this, void 0, void 0, function* () {
+        const options = {
+            method: 'POST',
+        };
+        if (jsObject != null) {
+            options.body = JSON.stringify(jsObject);
+            options.headers = { 'Content-type': 'application/json' };
+        }
+        return yield execFetch(url, options);
+    });
+}
+exports.execPost = execPost;
+function entityToRow(entity, index) {
+    return [index, entity.id, entity.label, entity.description];
+}
+exports.entityToRow = entityToRow;
+function eventToRow(event, index) {
+    const descr = event.description === null ? '' : event.description;
+    return [index, event.wikidata_identifier, event.label, descr];
+}
+exports.eventToRow = eventToRow;
+function tagToRow(tag, index) {
+    return [index, tag.label];
+}
+exports.tagToRow = tagToRow;

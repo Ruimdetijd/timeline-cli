@@ -10,22 +10,20 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 Object.defineProperty(exports, "__esModule", { value: true });
 const readline_1 = require("./readline");
 const search_entity_1 = require("./search-entity");
-const utils_1 = require("./db/utils");
+const _1 = require(".");
+const utils_1 = require("./utils");
+const constants_1 = require("./constants");
 function main() {
     return __awaiter(this, void 0, void 0, function* () {
-        const entity = yield search_entity_1.default();
-        if (entity == null)
+        const selection = yield search_entity_1.default();
+        if (selection == null)
             return;
+        if (selection in _1.MenuAction)
+            return selection;
+        const entity = selection;
         const confirmed = yield readline_1.confirm(`Is this correct?\n${entity.id}, ${entity.label}, ${entity.description}\n(yes)\n`);
-        if (confirmed) {
-            const sql = `INSERT INTO tag
-						(label, description, wikidata_identifier)
-					VALUES
-						($1, $2, $3)`;
-            const rows = yield utils_1.execSql(sql, [entity.label, entity.description, entity.id]);
-            if (rows.length === 1)
-                return 'Inserted tag';
-        }
+        if (confirmed)
+            yield utils_1.execPost(`${constants_1.civslogServerURL}/tags`, entity);
     });
 }
 exports.default = main;
