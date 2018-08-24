@@ -82,7 +82,7 @@ export default mainMenu
 // 	const wdEditor = await wdEdit({
 // 		username: process.env.WDUSER,
 // 		password: process.env.WDPASSWORD,
-// 		userAgent: 'timeline-cli:1.0.0 (https://github.com/chronovis/timeline-cli'
+// 		userAgent: 'civslog-cli (https://github.com/ruimdetijd/civslog-cli'
 // 	})
 
 	// wdEditor.claim.add('Q4115189', 'P569', { time: '1802-01-05', precision: 11 })

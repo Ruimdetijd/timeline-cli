@@ -4,7 +4,7 @@ import { WdEntity } from './models'
 import { execFetch, entityToRow } from './utils'
 import { MenuAction } from '.'
 import * as Table from 'tty-table'
-import { TABLE_HEADER } from './constants';
+import { TABLE_HEADER, wikiApiURL } from './constants';
 
 function logOption(index: string, label: string, description: string = '', id: string = '') {
 	console.log(chalk`{cyan ${index}} {gray ${id}} ${label} {gray ${description}}`)
@@ -14,7 +14,7 @@ export default async (): Promise<WdEntity | MenuAction> => {
 	const searchTerm = await ask('Search for: ')
 
 	if (searchTerm === '') return
-	const [searchResult] = await execFetch(`https://www.wikidata.org/w/api.php?action=wbsearchentities&search=${searchTerm.trim()}&language=en&format=json`)
+	const [searchResult] = await execFetch(`${wikiApiURL}?action=wbsearchentities&search=${searchTerm.trim()}&language=en&format=json`)
 	const entities: WdEntity[] = searchResult.search
 
 	if (entities.length) {
