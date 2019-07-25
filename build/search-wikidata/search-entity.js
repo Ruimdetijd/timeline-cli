@@ -8,12 +8,12 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-const readline_1 = require("./readline");
+const readline_1 = require("../readline");
 const chalk_1 = require("chalk");
-const utils_1 = require("./utils");
-const _1 = require(".");
+const utils_1 = require("../utils");
+const __1 = require("..");
 const Table = require("tty-table");
-const constants_1 = require("./constants");
+const constants_1 = require("../constants");
 function logOption(index, label, description = '', id = '') {
     console.log(chalk_1.default `{cyan ${index}} {gray ${id}} ${label} {gray ${description}}`);
 }
@@ -36,11 +36,11 @@ function searchEntity() {
             const anwserIndex = parseInt(anwser, 10);
             console.log(anwserIndex);
             if (isNaN(anwserIndex))
-                return _1.MenuAction.RELOAD;
+                return __1.MenuAction.RELOAD;
             if (anwser.toUpperCase() === 'B')
-                return _1.MenuAction.BACK;
+                return __1.MenuAction.BACK;
             if (anwser.toUpperCase() === 'Q')
-                return _1.MenuAction.QUIT;
+                return __1.MenuAction.QUIT;
             return entities[anwserIndex];
         }
     });

@@ -1,45 +1,59 @@
-#! /usr/bin/env node
-
-import * as fs from 'fs'
 import * as path from 'path'
 import * as dotenv from 'dotenv'
 dotenv.config({ path: path.resolve(__dirname, '../../.env') })
 import chalk from 'chalk'
 import { civslogServerURL } from '../constants';
-import { execFetch } from '../utils';
-const jsonPath = path.resolve(__dirname, '../../war-ids.json')
-const IDs = JSON.parse(fs.readFileSync(jsonPath, 'utf8')).slice(260)
+import { execFetch, logError } from '../utils';
+import { RawEv3nt } from 'timeline';
+import { Response } from 'node-fetch';
 
-let i = 0
+async function delay(ms) {
+  return new Promise(response => setTimeout(response, ms))
+}
+
+export type Action = 'insert' | 'update' | 'image'
 
 // Fetches info from Wikidata and adds it to the db
-const handleWikidataID = async () => {
-  const id = IDs[i]
+async function handleWikidataID(id: string, action: Action) {
 
   // Check if the event is already inserted in the database
-	const [existingEvent] = await execFetch(`${civslogServerURL}/events/${id}`)
+  const [existingEvent] = await execFetch(`${civslogServerURL}/events/${id}`) as [RawEv3nt, Response]
 
-  // Only fetch from wikidata if the battle is unkown
-  if (existingEvent == null) {
-	  await execFetch(`${civslogServerURL}/events/${id}`, { method: 'POST' })
-  } else {
-    console.log(chalk.yellow(`'${existingEvent.label}' (${existingEvent.wikidata_identifier}) already exists!`))
+  if (
+    (action === 'insert' && existingEvent == null) ||
+    (action === 'image' && existingEvent != null) ||
+    action === 'update'
+  ) {
+    const [event] = await execFetch(`${civslogServerURL}/events/${id}`, { method: 'POST' }) as [RawEv3nt, Response]
+    if (event == null) console.log(chalk.red(`Event not found...`))
+    else console.log(chalk.yellow(`'${event.lbl}' (${event.wid}) updated!`))
+    await delay(1000)
   }
 
-  if (i < IDs.length - 1) {
-    // Set the next index
-    i++
-    console.log(chalk.cyan(`Number: ${i}`))
+  if (action === 'insert' && existingEvent == null) {
+    console.log(chalk.yellow(`'${existingEvent.lbl}' (${existingEvent.wid}) already exists!`))
+  }
 
-    // If the battle is already known, we do not have to relieve the Wikidata server
-    const wait = (existingEvent == null) ? 1000 : 0
-
-    // After the `wait`, insert the next battle
-    setTimeout(() => handleWikidataID(), wait)
+  if (action === 'image' && existingEvent != null) {
+    const [, response] = await execFetch(`${civslogServerURL}/events/${id}/image`)
+    if (response == null)  {
+      logError('handleWikidataID', ['Response is undefined'])
+    } else if (response.status === 404) {
+      console.log(chalk.red(`'${existingEvent.lbl}' (${existingEvent.wid}) has no image(s)!`))
+    } else if (response.status === 204) {
+      console.log(chalk.yellow(`Retrieved image for: '${existingEvent.lbl}' (${existingEvent.wid})!`))
+    }
+    await delay(1000)
   }
 }
 
-handleWikidataID()
+export default async function bulkUpdate(IDs: string[], action: Action = 'insert'): Promise<void> {
+  let index = 0
+  for (const id of IDs) {
+    console.log(chalk.cyan(`${++index}`))
+    await handleWikidataID(id, action)
+  }
+}
 
 /*
 # The battles array was downloaded from Wikidata:

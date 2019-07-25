@@ -1,2 +1,3 @@
 import { MenuAction } from './index';
-export default function listEventsWithout(type: 'date' | 'label' | 'location'): Promise<MenuAction | string>;
+export declare type EventListType = 'date' | 'label' | 'location' | 'image';
+export default function listEventsWithout(type: EventListType): Promise<MenuAction | string>;

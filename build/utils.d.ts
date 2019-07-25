@@ -1,5 +1,6 @@
 import { Response } from 'node-fetch';
-import { WdEntity, Ev3nt } from "./models";
+import { WdEntity } from "./models";
+import { RawEv3nt } from "timeline";
 export declare const wait: (ms: any) => Promise<{}>;
 export declare const clearLog: () => void;
 export declare const logError: (title: any, lines: any) => void;
@@ -9,5 +10,5 @@ export declare const logHeader: (header: any) => void;
 export declare function execFetch(url: string, options?: {}): Promise<[any, Response]>;
 export declare function execPost(url: string, jsObject?: any): Promise<[any, Response]>;
 export declare function entityToRow(entity: WdEntity, index: any): any[];
-export declare function eventToRow(event: Ev3nt, index: any): any[];
+export declare function eventToRow(event: RawEv3nt, index: any): any[];
 export declare function tagToRow(tag: any, index: any): any[];

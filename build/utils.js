@@ -62,11 +62,11 @@ function entityToRow(entity, index) {
 }
 exports.entityToRow = entityToRow;
 function eventToRow(event, index) {
-    const descr = event.description === null ? '' : event.description;
-    return [index, event.wikidata_identifier, event.label, descr];
+    const dsc = event.dsc === null ? '' : event.dsc;
+    return [index, event.wid, event.lbl, dsc];
 }
 exports.eventToRow = eventToRow;
 function tagToRow(tag, index) {
-    return [index, tag.label];
+    return [index, tag];
 }
 exports.tagToRow = tagToRow;

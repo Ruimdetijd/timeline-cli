@@ -1,16 +1,16 @@
-import  { ask } from './readline'
+import  { ask } from '../readline'
 import chalk from 'chalk';
-import { WdEntity } from './models'
-import { execFetch, entityToRow } from './utils'
-import { MenuAction } from '.'
+import { WdEntity } from '../models'
+import { execFetch, entityToRow } from '../utils'
+import { MenuAction } from '..'
 import * as Table from 'tty-table'
-import { TABLE_HEADER, wikiApiURL } from './constants';
+import { TABLE_HEADER, wikiApiURL } from '../constants';
 
 function logOption(index: string, label: string, description: string = '', id: string = '') {
 	console.log(chalk`{cyan ${index}} {gray ${id}} ${label} {gray ${description}}`)
 }
 
-export default async (): Promise<WdEntity | MenuAction> => {
+export default async function searchEntity(): Promise<WdEntity | MenuAction> {
 	const searchTerm = await ask('Search for: ')
 
 	if (searchTerm === '') return

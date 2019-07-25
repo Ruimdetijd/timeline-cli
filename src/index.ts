@@ -1,16 +1,15 @@
 import chalk from 'chalk'
 import { ask } from './readline'
 import searchWikidata from './search-wikidata'
-import handleTag from './handle-tag'
 import listEventsWithout from './list-events-without'
 import { logHeader, logMessage, clearLog } from './utils'
 
 const menuOptions = [
-	'Insert or update an event',
-	'Insert a tag',
-	'List events without a date',
-	'List events without a location',
-	'List events without a label',
+	'Insert or update a wikidata event',
+	chalk`Events without a date {grey not updated in the last week}`,
+	chalk`Events without a location {grey not updated in the last week}`,
+	chalk`Events without a label {grey not updated in the last week}`,
+	chalk`Events without an image {grey not updated in the last week}`,
 ]
 
 export enum MenuAction {
@@ -24,21 +23,18 @@ const mainMenu = async (message: Message = '', option?: string) => {
 	clearLog()
 	logMessage(message)
 
+	logHeader(menuOptions[option])
+
 	if (option === '0') {
-		logHeader('Insert or update an event')
 		message = await searchWikidata()
 	} else if (option === '1') {
-		logHeader('Insert a tag')
-		message = await handleTag()
-	} else if (option === '2') {
-		logHeader('Events without dates')
 		message = await listEventsWithout('date')
-	} else if (option === '3') {
-		logHeader('Events without a location')
+	} else if (option === '2') {
 		message = await listEventsWithout('location')
-	} else if (option === '4') {
-		logHeader('Events without a label')
+	} else if (option === '3') {
 		message = await listEventsWithout('label')
+	} else if (option === '4') {
+		message = await listEventsWithout('image')
 	} else if (option === 'q' || option === 'Q') {
 		message = MenuAction.QUIT
 	} else {
@@ -50,7 +46,11 @@ const mainMenu = async (message: Message = '', option?: string) => {
 		option = await ask(`\nChoose an option: `)
 	}
 
-	if (message === MenuAction.BACK || message === MenuAction.RELOAD) {
+	if (message === MenuAction.RELOAD) {
+		message = null
+	}
+
+	if (message === MenuAction.BACK) {
 		message = null
 		option = null
 	}

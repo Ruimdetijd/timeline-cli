@@ -14,25 +14,33 @@ const constants_1 = require("./constants");
 const _1 = require(".");
 const utils_1 = require("./utils");
 const Table = require("tty-table");
+const insert_events_1 = require("./bulk/insert-events");
 const logOption = (index, label, description = '', id = '') => console.log(chalk_1.default ` {cyan ${index}} {gray ${id}} ${label} {gray ${description}}`);
-exports.default = (events, count) => __awaiter(this, void 0, void 0, function* () {
+exports.default = (events, count, type) => __awaiter(this, void 0, void 0, function* () {
     if (!events.length) {
         console.error(chalk_1.default.yellow('\nNothing found\n'));
+        return _1.MenuAction.BACK;
     }
-    else {
-        const table = Table(constants_1.TABLE_HEADER, events.map(utils_1.eventToRow));
-        console.log(table.render());
-        logOption('', `... and ${count - constants_1.listEventLimit} more\n`);
-        logOption('B', 'Back');
-        logOption('Q', 'Quit');
-        const anwser = yield readline_1.ask('\nEnter a number: ');
-        const anwserIndex = parseInt(anwser, 10);
-        if (anwser.toUpperCase() === 'B')
-            return _1.MenuAction.BACK;
-        if (anwser.toUpperCase() === 'Q')
-            return _1.MenuAction.QUIT;
-        if (isNaN(anwserIndex))
-            return _1.MenuAction.RELOAD;
-        return events[anwserIndex];
+    const table = Table(constants_1.TABLE_HEADER, events.map(utils_1.eventToRow));
+    console.log(table.render());
+    logOption('', `... and ${count - constants_1.listEventLimit} more\n`);
+    logOption('U', 'Bulk update');
+    logOption('B', 'Back');
+    logOption('Q', 'Quit');
+    const anwser = yield readline_1.ask('\nEnter a number: ');
+    const anwserIndex = parseInt(anwser, 10);
+    if (anwser.toUpperCase() === 'U') {
+        if (type === 'image')
+            yield insert_events_1.default(events.map(e => e.wid), 'image');
+        else
+            yield insert_events_1.default(events.map(e => e.wid), 'update');
+        return _1.MenuAction.RELOAD;
     }
+    if (anwser.toUpperCase() === 'B')
+        return _1.MenuAction.BACK;
+    if (anwser.toUpperCase() === 'Q')
+        return _1.MenuAction.QUIT;
+    if (isNaN(anwserIndex))
+        return _1.MenuAction.RELOAD;
+    return events[anwserIndex];
 });

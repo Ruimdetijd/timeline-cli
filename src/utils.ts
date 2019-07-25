@@ -1,6 +1,7 @@
 import chalk from "chalk"
 import fetch, { Response } from 'node-fetch'
-import { WdEntity, Ev3nt } from "./models";
+import { WdEntity } from "./models";
+import { RawEv3nt } from "timeline";
 
 export const wait = ms => new Promise(resolve => setTimeout(resolve, ms))
 
@@ -57,11 +58,11 @@ export function entityToRow(entity: WdEntity, index) {
 	return [index, entity.id, entity.label, entity.description]
 }
 
-export function eventToRow(event: Ev3nt, index) {
-	const descr = event.description === null ? '' : event.description
-	return [index, event.wikidata_identifier, event.label, descr]
+export function eventToRow(event: RawEv3nt, index) {
+	const dsc = event.dsc === null ? '' : event.dsc
+	return [index, event.wid, event.lbl, dsc]
 }
 
 export function tagToRow(tag, index) {
-	return [index, tag.label]
+	return [index, tag]
 }

@@ -15,12 +15,12 @@ const index_1 = require("./index");
 function listEventsWithout(type) {
     return __awaiter(this, void 0, void 0, function* () {
         const [{ events, count }] = yield utils_1.execFetch(`${constants_1.civslogServerURL}/events/by-missing/${type}?limit=${constants_1.listEventLimit}`);
-        let selection = yield list_events_1.default(events, count);
+        let selection = yield list_events_1.default(events, count, type);
         if (selection in index_1.MenuAction)
             return selection;
         const event = selection;
-        yield utils_1.execFetch(`${constants_1.civslogServerURL}/events/${event.wikidata_identifier}`, { method: 'POST' });
-        return `'${event.label}' (${event.wikidata_identifier}) updated`;
+        const [updatedEvent] = yield utils_1.execFetch(`${constants_1.civslogServerURL}/events/${event.wid}`, { method: 'POST' });
+        return `'${updatedEvent.label}' (${event.wid}) updated`;
     });
 }
 exports.default = listEventsWithout;

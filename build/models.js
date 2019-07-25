@@ -26,6 +26,3 @@ class WdLocation {
     }
 }
 exports.WdLocation = WdLocation;
-class Ev3nt {
-}
-exports.Ev3nt = Ev3nt;

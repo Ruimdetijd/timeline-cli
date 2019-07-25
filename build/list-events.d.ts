@@ -1,4 +1,3 @@
-import { Ev3nt } from './models';
-import { MenuAction } from '.';
-declare const _default: (events: Ev3nt[], count: number) => Promise<Ev3nt | MenuAction>;
+import { EventListType } from './list-events-without';
+declare const _default: (events: any[], count: number, type: EventListType) => Promise<any>;
 export default _default;

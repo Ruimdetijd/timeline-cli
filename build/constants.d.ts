@@ -1,6 +1,6 @@
 export declare const wikiApiURL = "https://www.wikidata.org/w/api.php";
 export declare const civslogServerURL = "http://localhost:3377";
-export declare const listEventLimit = 10;
+export declare const listEventLimit = 1000;
 export declare const TABLE_HEADER: ({
     value: string;
     color: string;

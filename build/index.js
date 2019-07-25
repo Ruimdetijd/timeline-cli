@@ -11,15 +11,14 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const chalk_1 = require("chalk");
 const readline_1 = require("./readline");
 const search_wikidata_1 = require("./search-wikidata");
-const handle_tag_1 = require("./handle-tag");
 const list_events_without_1 = require("./list-events-without");
 const utils_1 = require("./utils");
 const menuOptions = [
-    'Insert or update an event',
-    'Insert a tag',
-    'List events without a date',
-    'List events without a location',
-    'List events without a label',
+    'Insert or update a wikidata event',
+    chalk_1.default `Events without a date {grey not updated in the last week}`,
+    chalk_1.default `Events without a location {grey not updated in the last week}`,
+    chalk_1.default `Events without a label {grey not updated in the last week}`,
+    chalk_1.default `Events without an image {grey not updated in the last week}`,
 ];
 var MenuAction;
 (function (MenuAction) {
@@ -30,25 +29,21 @@ var MenuAction;
 const mainMenu = (message = '', option) => __awaiter(this, void 0, void 0, function* () {
     utils_1.clearLog();
     utils_1.logMessage(message);
+    utils_1.logHeader(menuOptions[option]);
     if (option === '0') {
-        utils_1.logHeader('Insert or update an event');
         message = yield search_wikidata_1.default();
     }
     else if (option === '1') {
-        utils_1.logHeader('Insert a tag');
-        message = yield handle_tag_1.default();
-    }
-    else if (option === '2') {
-        utils_1.logHeader('Events without dates');
         message = yield list_events_without_1.default('date');
     }
-    else if (option === '3') {
-        utils_1.logHeader('Events without a location');
+    else if (option === '2') {
         message = yield list_events_without_1.default('location');
     }
-    else if (option === '4') {
-        utils_1.logHeader('Events without a label');
+    else if (option === '3') {
         message = yield list_events_without_1.default('label');
+    }
+    else if (option === '4') {
+        message = yield list_events_without_1.default('image');
     }
     else if (option === 'q' || option === 'Q') {
         message = MenuAction.QUIT;
@@ -61,7 +56,10 @@ const mainMenu = (message = '', option) => __awaiter(this, void 0, void 0, funct
         console.log(opts);
         option = yield readline_1.ask(`\nChoose an option: `);
     }
-    if (message === MenuAction.BACK || message === MenuAction.RELOAD) {
+    if (message === MenuAction.RELOAD) {
+        message = null;
+    }
+    if (message === MenuAction.BACK) {
         message = null;
         option = null;
     }

@@ -1,0 +1,53 @@
+version: "3.6"
+
+services:
+  db:
+    environment:
+      - POSTGRES_PASSWORD=postgis
+    image: mdillon/postgis:10-alpine
+    volumes:
+      - timeline_db:/var/lib/postgresql/data
+
+  # Civ's Log server. An Express REST server
+  server:
+    image: node:9-alpine
+    command: ["npm", "run", "start:dev"]
+    depends_on:
+      - db
+    environment:
+      NODE_ENV: development
+      PGHOST: db
+    secrets:
+      - civslog_db_name
+      - civslog_db_user
+      - civslog_db_password
+    user: node
+    volumes:
+      - ./node_modules/civslog-server:/app
+    working_dir: /app
+
+  # Civ's Log client. Also an Express webserver, but solemnly serving the index.html
+  # and proxying towards Civ's Log REST server
+  client:
+    image: node:9-alpine
+    command: ["npm", "run", "start:dev"]
+    depends_on:
+      - server 
+    environment:
+      NODE_ENV: development
+      CIVSLOG_SERVER: server
+    user: node
+    volumes:
+      - ./:/app
+    working_dir: /app
+
+volumes:
+  timeline_db:
+
+secrets:
+  civslog_db_name:
+    external: true
+  civslog_db_user:
+    external: true
+  civslog_db_password:
+    external: true
